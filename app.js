@@ -1,23 +1,31 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const connectMySQL = require('./connector/mysql');
+const connectMongoDB = require('./connector/mongoDB');
+
+// Importing routes
 const warehouseRoutes = require('./routes/warehouse_service');
 const productRoutes = require('./routes/product_service');
 const cartRoutes = require('./routes/cart_service');
 const orderRoutes = require('./routes/order_service');
+const categoryRoutes = require('./routes/category_service');
 
 const app = express();
 
-// Middleware to parse JSON
-app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 
-// Route middleware
-app.use('/warehouses', warehouseRoutes);
-app.use('/products', productRoutes);
-app.use('/carts', cartRoutes);
-app.use('/orders', orderRoutes);
+connectMongoDB();
 
-// Assuming you're serving on port 3000
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+// Route Middlewares
+app.use('/api/warehouses', warehouseRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/carts', cartRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/categories', categoryRoutes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server started on port ${PORT}`);
 });
-
-module.exports = app; // for potential future use and testing
+module.exports = app;

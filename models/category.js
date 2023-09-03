@@ -15,18 +15,23 @@ const attributeSchema = new mongoose.Schema({
         required: true
     },
     values: [String]
-});
+    
+}, {_id: false});
 
 const categorySchema = new mongoose.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     attributes: [attributeSchema]
 });
 
 // Add a childCategory field that is an array of this schema
 categorySchema.add({ childCategories: [categorySchema] });
+
+// Disable the version key "__v"
+categorySchema.set('versionKey', false);
 
 const Category = mongoose.model('Category', categorySchema);
 

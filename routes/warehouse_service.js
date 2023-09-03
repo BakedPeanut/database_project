@@ -35,7 +35,7 @@ router.put('/update/:id', async (req, res) => {
 // Delete warehouse
 router.delete('/delete/:id', async (req, res) => {
     try {
-        await Warehouse.deleteById(req.params.id);
+        await Warehouse.delete(req.params.id);
         res.status(200).json({ message: 'Deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -43,7 +43,7 @@ router.delete('/delete/:id', async (req, res) => {
 });
 
 // Get all warehouses
-router.get('/all', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const warehouses = await Warehouse.selectAll();
         res.status(200).json(warehouses);

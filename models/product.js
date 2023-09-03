@@ -16,54 +16,125 @@ class Product {
         this.addedTime = addedTime;
     }
 
-    static create(data) {
-        return new Promise((resolve, reject) => {
-            const query = "INSERT INTO products SET ?";
-            db.query(query, data, (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
+    static create(product) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const query = "INSERT INTO product SET ?";
+                const result = await db.query(query, product);
+                const insertedId = result.insertId;
+                resolve(insertedId);
+            } catch (err) {
+                reject(err);
+            }
         });
     }
+    
 
     static fetchById(id) {
-        return new Promise((resolve, reject) => {
-            const query = "SELECT * FROM products WHERE id = ?";
-            db.query(query, [id], (err, results) => {
-                if (err) reject(err);
-                resolve(results[0]);
-            });
+        return new Promise(async (resolve, reject) => {
+            try {
+                const query = "SELECT * FROM product WHERE id = ?";
+                const results = await db.query(query, id);
+                if (results.length === 0) {
+                    resolve(null); // Product not found
+                    return;
+                }
+                const product = results[0]; // Assuming only one row is returned
+                resolve(product);
+            } catch (err) {
+                reject(err);
+            }
         });
     }
+    
 
-    static update(id, data) {
-        return new Promise((resolve, reject) => {
-            const query = "UPDATE products SET ? WHERE id = ?";
-            db.query(query, [data, id], (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
+    static update(id, updates) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const query = "UPDATE product SET ? WHERE id = ?";
+                const result = await db.query(query, [updates, id]);
+                if (result.affectedRows === 0) {
+                    reject(new Error("Product not found"));
+                    return;
+                }
+                resolve();
+            } catch (err) {
+                reject(err);
+            }
         });
     }
+    
 
     static deleteById(id) {
-        return new Promise((resolve, reject) => {
-            const query = "DELETE FROM products WHERE id = ?";
-            db.query(query, [id], (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
+        return new Promise(async (resolve, reject) => {
+            const connection = await db.getConnection();
+    
+            try {
+                await connection.beginTransaction();
+    
+                // Check if warehouse has associated products
+                const productsQuery = "SELECT 1 FROM product WHERE warehouse_id = ?";
+                const productsResult = await connection.query(productsQuery, id);
+    
+                if (productsResult.length > 0) {
+                    await connection.rollback();
+                    reject(new Error("Cannot delete warehouse with associated products"));
+                    return;
+                }
+    
+                // Delete the warehouse
+                const deleteQuery = "DELETE FROM warehouse WHERE id = ?";
+                const deleteResult = await connection.query(deleteQuery, id);
+    
+                if (deleteResult.affectedRows === 0) {
+                    await connection.rollback();
+                    reject(new Error("Warehouse not found"));
+                    return;
+                }
+    
+                await connection.commit();
+                resolve();
+            } catch (err) {
+                await connection.rollback();
+                reject(err);
+            } finally {
+                connection.release();
+            }
         });
     }
-
+    
+    
     static selectAll() {
-        return new Promise((resolve, reject) => {
-            const query = "SELECT * FROM products";
-            db.query(query, (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
+        return new Promise(async (resolve, reject) => {
+            try {
+                const query = "SELECT * FROM product";
+                const results = await db.query(query);
+    
+                // Check if results is an array of arrays
+                if (Array.isArray(results) && Array.isArray(results[0])) {
+                    // Extract the inner array
+                    const products = results[0].map(row => ({
+                        id: row.id,
+                        width: row.width,
+                        length: row.length,
+                        height: row.height,
+                        inStock: row.inStock,
+                        title: row.title,
+                        description: row.description,
+                        price: row.price,
+                        img: row.img,
+                        warehouseId: row.warehouseId,
+                        addedTime: row.addedTime
+                    }));
+                    resolve(products);
+                } else {
+                    reject(new Error("Invalid query results format"));
+                }
+            } catch (err) {
+                reject(err);
+            }
         });
     }
+    
 }
 module.exports = Product;

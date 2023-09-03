@@ -59,4 +59,13 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// Delete Category
+router.delete('/', async (req, res) => {
+    try {
+        await Category.deleteMany({});
+        res.status(200).send(category);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 module.exports = router;

@@ -3,9 +3,10 @@ const Warehouse = require('../models/warehouse');
 const router = express.Router();
 
 // Create warehouse
-router.post('/create', async (req, res) => {
+router.post('/', async (req, res) => {
     try {
-        const result = await Warehouse.create(req.body);
+        const { name, province, city, district, street, number, volume } = req.body;
+        const result = await Warehouse.createWarehouse(name, province, city, district, street, number, volume);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -15,7 +16,7 @@ router.post('/create', async (req, res) => {
 // Get warehouse by ID
 router.get('/:id', async (req, res) => {
     try {
-        const warehouse = await Warehouse.fetchById(req.params.id);
+        const warehouse = await Warehouse.getWarehouseById(req.params.id);
         res.status(200).json(warehouse);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -23,9 +24,10 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update warehouse
-router.put('/update/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
-        await Warehouse.update(req.params.id, req.body);
+        const { name, province, city, district, street, number, volume } = req.body;
+        await Warehouse.updateWarehouse(req.params.id, name, province, city, district, street, number, volume);
         res.status(200).json({ message: 'Updated successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -33,22 +35,50 @@ router.put('/update/:id', async (req, res) => {
 });
 
 // Delete warehouse
-router.delete('/delete/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
-        await Warehouse.delete(req.params.id);
-        res.status(200).json({ message: 'Deleted successfully' });
+        const result = await Warehouse.deleteById(req.params.id); // Call the function
+        if (result === "Warehouse deleted successfully.") {
+            res.status(200).json({ message: result }); // Success response
+        } else {
+            res.status(400).json({ message: result }); // Bad request, indicating that deletion wasn't possible due to associated products
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
+router.get('/inventory/:id', async (req, res) => {
+    try {
+        console.log(req.params.id);
+        const test = await Warehouse.getWarehouseProduct(); // Make sure this method exists in your Warehouse module
+        res.status(200).json(test);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+
 // Get all warehouses
 router.get('/', async (req, res) => {
     try {
-        const warehouses = await Warehouse.selectAll();
+        const warehouses = await Warehouse.getAllWarehouses();
         res.status(200).json(warehouses);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+
+// Move product to another warehouse
+// A body should have the id of the source and des warehouse, the product and the number of copies
+router.post('/move', async (req, res) => {
+    const { destinationWarehouseId,sourceWarehouseID, productId, quantity } = req.body;
+    try {
+        const result = await Warehouse.moveProduct(sourceWarehouseID, destinationWarehouseId, productId, quantity);
+        res.status(200).json({ message: result });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error moving product.' });
     }
 });
 

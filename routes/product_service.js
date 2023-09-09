@@ -1,26 +1,108 @@
 const express = require('express');
 const Product = require('../models/product');
 const router = express.Router();
+const Category = require('../models/category');
 
 // Create product
-router.post('/create', async (req, res) => {
+router.post('/', async (req, res) => {
     try {
-        const result = await Product.create(req.body);
+        // Extract the necessary values from the request body
+        const {
+            width,
+            length,
+            height,
+            inStock,
+            title,
+            description,
+            price,
+            img,
+            category,
+            sellerAccount
+        } = req.body;
+
+        // Call the addProductToWarehouse method to insert the product
+        const result = await Product.addProductToWarehouse(
+            width,
+            length,
+            height,
+            inStock,
+            title,
+            description,
+            price,
+            img,
+            category,
+            sellerAccount
+        );
+
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-// Get product by ID
-router.get('/:id', async (req, res) => {
+
+router.get('/:categoryID', async (req, res) => {
+    let whereConditions = [];
+    let queryParams = [];
+
+    // Search by keyword
+    if (req.query.keyword) {
+        whereConditions.push("(title LIKE ? OR description LIKE ?)");
+        queryParams.push('%' + req.query.keyword + '%', '%' + req.query.keyword + '%');
+    }
+
+    // Filter by category
+    const categoryID = req.params.categoryID;
+
+    if (categoryID != 0) {
+        const categoryList = await getAllCategoryIds(categoryID);
+
+        // Check if no valid category IDs are found
+        if (categoryList.length === 0) {
+            return res.status(400).json({ error: 'Invalid category ID' });
+        }
+
+        whereConditions.push(`category IN (?)`);
+        queryParams.push(categoryList);
+    }
+
+    // Filter by price range
+    if (req.query.startPrice && req.query.endPrice) {
+        whereConditions.push("price BETWEEN ? AND ?");
+        queryParams.push(req.query.startPrice, req.query.endPrice);
+    }
+
+    // Sorting
+    let sortBy = 'addedTime';  // default sort
+    let sortDir = 'DESC';      // default direction
+
+    if (req.query.sortBy) {
+        if (['price', 'addedTime'].includes(req.query.sortBy)) {
+            sortBy = req.query.sortBy;
+        }
+    }
+
+    if (req.query.sortDir) {
+        if (['asc', 'desc'].includes(req.query.sortDir.toLowerCase())) {
+            sortDir = req.query.sortDir.toUpperCase();
+        }
+    }
+
+    const sqlQuery = `
+        SELECT * FROM Product 
+        ${whereConditions.length ? "WHERE " + whereConditions.join(' AND ') : ""}
+        ORDER BY ${sortBy} ${sortDir}
+    `;
+
     try {
-        const product = await Product.fetchById(req.params.id);
-        res.status(200).json(product);
+        const results = await Product.queryProduct(sqlQuery, queryParams);
+        res.json(results);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ error: 'Database query error' });
     }
 });
+
 
 // Update product
 router.put('/update/:id', async (req, res) => {
@@ -51,5 +133,26 @@ router.get('/', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+async function getAllCategoryIds(categoryId) {
+  const category = await Category.findById(categoryId).exec();
+
+  if (!category) {
+    throw new Error('Category not found');
+  }
+
+  const categoryIds = [category._id];
+
+  async function getChildrenIds(parentId) {
+    const children = await Category.find({ parent: parentId }).exec();
+    for (const child of children) {
+      categoryIds.push(child._id);
+      await getChildrenIds(child._id);
+    }
+  }
+
+  await getChildrenIds(category._id);
+  return categoryIds;
+}
 
 module.exports = router;

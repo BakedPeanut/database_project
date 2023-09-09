@@ -1,5 +1,6 @@
 const db = require('../connector/mysql');
 
+// Constructor of Product entity
 class Product {
     constructor(id, width, length, height, inStock, title, description, price, img, warehouseId, categoryId, addedTime) {
         this.id = id;
@@ -12,47 +13,62 @@ class Product {
         this.price = price;
         this.img = img;
         this.warehouseId = warehouseId;
-        this.categoryId = categoryId;  // This will be utilized once you provide details about the Category.
+        this.categoryId = categoryId;  
         this.addedTime = addedTime;
     }
 
-    static create(product) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const query = "INSERT INTO product SET ?";
-                const result = await db.query(query, product);
-                const insertedId = result.insertId;
-                resolve(insertedId);
-            } catch (err) {
-                reject(err);
-            }
-        });
+    // Call procedure to add product
+    static async addProductToWarehouse(
+        width,
+        length,
+        height,
+        inStock,
+        title,
+        description,
+        price,
+        img,
+        category,
+        sellerAccount
+    ) {
+        try {
+            // Call the procedure
+            const query = 'CALL AddProductToWarehouse(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            const values = [
+                width,
+                length,
+                height,
+                inStock,
+                title,
+                description,
+                price,
+                img,
+                category,
+                sellerAccount
+            ];
+
+            const result = await db.pool.query(query, values);
+            return result;
+        } catch (err) {
+            throw err;
+        }
     }
     
-
-    static fetchById(id) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const query = "SELECT * FROM product WHERE id = ?";
-                const results = await db.query(query, id);
-                if (results.length === 0) {
-                    resolve(null); // Product not found
-                    return;
-                }
-                const product = results[0]; // Assuming only one row is returned
-                resolve(product);
-            } catch (err) {
-                reject(err);
-            }
-        });
+    // Use for multiple field product filter. The query is passed as parameter
+    static async queryProduct(sqlQuery, params) {
+        try {
+            const result = await db.pool.query(sqlQuery, params);
+            return result[0];
+        } catch (error) {
+            throw error;
+        }
     }
     
-
+    // Update product
     static update(id, updates) {
         return new Promise(async (resolve, reject) => {
             try {
                 const query = "UPDATE product SET ? WHERE id = ?";
-                const result = await db.query(query, [updates, id]);
+                const result = await db.pool.query(query, [updates, id]);
                 if (result.affectedRows === 0) {
                     reject(new Error("Product not found"));
                     return;
@@ -64,10 +80,10 @@ class Product {
         });
     }
     
-
+    // Delete product
     static deleteById(id) {
         return new Promise(async (resolve, reject) => {
-            const connection = await db.getConnection();
+            const connection = await db.pool.getConnection();
     
             try {
                 await connection.beginTransaction();
@@ -103,37 +119,16 @@ class Product {
         });
     }
     
-    
-    static selectAll() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const query = "SELECT * FROM product";
-                const results = await db.query(query);
-    
-                // Check if results is an array of arrays
-                if (Array.isArray(results) && Array.isArray(results[0])) {
-                    // Extract the inner array
-                    const products = results[0].map(row => ({
-                        id: row.id,
-                        width: row.width,
-                        length: row.length,
-                        height: row.height,
-                        inStock: row.inStock,
-                        title: row.title,
-                        description: row.description,
-                        price: row.price,
-                        img: row.img,
-                        warehouseId: row.warehouseId,
-                        addedTime: row.addedTime
-                    }));
-                    resolve(products);
-                } else {
-                    reject(new Error("Invalid query results format"));
-                }
-            } catch (err) {
-                reject(err);
-            }
-        });
+    // Get all product 
+    static async selectAll() {
+        try {
+            const query = "SELECT * FROM product";
+            const [results] = await db.pool.query(query);
+            return results[0];
+
+        } catch (err) {
+            throw err;
+        }
     }
     
 }

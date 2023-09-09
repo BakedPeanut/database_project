@@ -1,5 +1,6 @@
 const db = require('../connector/mysql');
 
+// Constructor of order
 class Order {
     constructor(id, cartId, status) {
         this.id = id;
@@ -7,54 +8,40 @@ class Order {
         this.status = status;
     }
     
-    static create(data) {
-        return new Promise((resolve, reject) => {
-            const query = "INSERT INTO orders SET ?";
-            db.query(query, data, (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
-        });
+    static async placeOrder(id) {
+        try {
+            const query = "call PlaceOrder(?)";
+            const [result] = await db.pool.query(query, [id]);
+            return result[0];    
+        } catch (err) {
+            throw err;
+        }
     }
 
-    static fetchById(id) {
-        return new Promise((resolve, reject) => {
-            const query = "SELECT * FROM orders WHERE id = ?";
-            db.query(query, [id], (err, results) => {
-                if (err) reject(err);
-                resolve(results[0]);
-            });
-        });
+    // get all order from the customer
+    static async fetchById(id) {
+        try {
+            const query = "SELECT Orders.orderId, Orders.orderStatus, OrderDetail.orderDetailId, OrderDetail.productId, OrderDetail.quantity FROM Orders LEFT JOIN OrderDetail ON Orders.orderId = OrderDetail.orderId WHERE Orders.customerID = ?";
+            const [result] = await db.pool.query(query, [id]);
+            return result[0];
+        } catch (err) {
+            throw err;
+        }
+      
     }
 
-    static update(id, data) {
-        return new Promise((resolve, reject) => {
-            const query = "UPDATE orders SET ? WHERE id = ?";
-            db.query(query, [data, id], (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
-        });
-    }
-
-    static deleteById(id) {
-        return new Promise((resolve, reject) => {
-            const query = "DELETE FROM orders WHERE id = ?";
-            db.query(query, [id], (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
-        });
-    }
-
-    static selectAll() {
-        return new Promise((resolve, reject) => {
-            const query = "SELECT * FROM orders";
-            db.query(query, (err, results) => {
-                if (err) reject(err);
-                resolve(results);
-            });
-        });
+    // Method to update status of the order
+    static async update(id, accept) {
+        try {
+            var query = "UPDATE Orders SET orderStatus = 'Accepted'  WHERE orderId = ?;";
+            if (!accept) {
+                query = "UPDATE Orders SET orderStatus = 'Rejected'  WHERE orderId = ?;";
+            }
+            const [result] = await db.pool.query(query, [id]);
+            return result[0];
+        } catch (err) {
+            throw err;
+        }
     }
 }
 module.exports = Order;

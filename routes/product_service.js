@@ -2,6 +2,7 @@ const express = require('express');
 const Product = require('../models/product');
 const router = express.Router();
 const Category = require('../models/category');
+const { getUserID } = require('../connector/mysql');
 
 // Create product
 router.post('/', async (req, res) => {
@@ -67,7 +68,14 @@ router.get('/:categoryID', async (req, res) => {
     }
 
     // Filter by price range
-    if (req.query.startPrice && req.query.endPrice) {
+    if (req.query.startPrice && ! req.query.endPrice) {
+        whereConditions.push("price >  ? ");
+        queryParams.push(parseFloat(req.query.startPrice).toFixed(2) );
+    } else if (!req.query.startPrice &&  req.query.endPrice) {
+        whereConditions.push("price < ?");
+        queryParams.push(parseFloat(req.query.endPrice).toFixed(2) );
+    }
+    else if (req.query.startPrice && req.query.endPrice) {
         whereConditions.push("price BETWEEN ? AND ?");
         queryParams.push(req.query.startPrice, req.query.endPrice);
     }
@@ -77,8 +85,12 @@ router.get('/:categoryID', async (req, res) => {
     let sortDir = 'DESC';      // default direction
 
     if (req.query.sortBy) {
-        if (['price', 'addedTime'].includes(req.query.sortBy)) {
-            sortBy = req.query.sortBy;
+        if (['price', 'date'].includes(req.query.sortBy)) {
+            if (req.query.sortBy === 'date')
+                sortBy = 'addedTime';
+            else {
+                sortBy = req.query.sortBy;
+            }
         }
     }
 

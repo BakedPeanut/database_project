@@ -1,6 +1,7 @@
 const express = require('express');
 const Warehouse = require('../models/warehouse');
 const router = express.Router();
+const { getUserID } = require('../connector/mysql');
 
 // Create warehouse
 router.post('/', async (req, res) => {

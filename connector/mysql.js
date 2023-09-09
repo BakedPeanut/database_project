@@ -2,6 +2,7 @@
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 
+let userID = null;
 let pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
@@ -10,38 +11,36 @@ let pool = mysql.createPool({
 });
 
 async function updateConnectionDetails(username, password) {
-    const [rows] = await pool.promise().execute('SELECT password, role FROM user WHERE username = ?', [username]);
+    const [rows] = await pool.promise().execute('SELECT password, role, id FROM user WHERE username = ?', [username]);
 
     if (rows.length) {
         const storedPassword = rows[0].password;
         const role = rows[0].role;
-
         // Check the provided password using bcrypt
         if (await bcrypt.compare(password, storedPassword)) {
-            pool.end();
-            
-
+            userID = rows[0].id; // Update the userID variable
+            console.log('Updated userID:', userID); // Debug statement
             // Create a new pool with provided credentials
             if(role === "ADMIN") {
                 pool = mysql.createPool({
                     host: 'localhost',
-                    user: "admin",
-                    password: "password",
-                    database: 'database_project'
+                    user: 'root',
+                    database: 'database_project',
+                    password: 'admin'
                 });
             } else if (role === "SELLER") {
                 pool = mysql.createPool({
                     host: 'localhost',
-                    user: "seller",
-                    password: "password",
-                    database: 'database_project'
+                    user: 'root',
+                    database: 'database_project',
+                    password: 'admin'
                 });
             } else {
                 pool = mysql.createPool({
                     host: 'localhost',
-                    user: "customer",
-                    password: "password",
-                    database: 'database_project'
+                    user: 'root',
+                    database: 'database_project',
+                    password: 'admin'
                 });   
             }
          
@@ -51,7 +50,12 @@ async function updateConnectionDetails(username, password) {
     return null;  // Invalid credentials
 }
 
+function getUserID() {
+    return userID;
+  }
 module.exports = {
     pool: pool.promise(),
-    updateConnectionDetails
+    updateConnectionDetails,
+    getUserID,
+    userID
 };

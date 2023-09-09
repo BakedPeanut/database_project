@@ -23,3 +23,26 @@ const productAttributeSchema = new mongoose.Schema({
 const ProductAttribute = mongoose.model('ProductAttribute', productAttributeSchema);
 
 module.exports = ProductAttribute;
+// const mongoose = require('mongoose');
+
+// const productAttributeSchema = new mongoose.Schema({
+//     attribute: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: 'Attribute', // Reference to your Attribute model
+//         required: true,
+//     },
+//     products: [
+//         {
+//             product: {
+//                 type: mongoose.Schema.Types.ObjectId,
+//                 ref: 'Product', // Reference to your Product model
+//                 required: true,
+//             },
+//             value: mongoose.Schema.Types.Mixed, // Allows mixed data types
+//         }
+//     ],
+// });
+
+// const ProductAttribute = mongoose.model('ProductAttribute', productAttributeSchema);
+
+// module.exports = ProductAttribute;

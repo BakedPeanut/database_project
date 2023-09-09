@@ -10,6 +10,7 @@ const productRoutes = require('./routes/product_service');
 const cartRoutes = require('./routes/cart_service');
 const orderRoutes = require('./routes/order_service');
 const categoryRoutes = require('./routes/category_service');
+const path = require('path');
 
 const app = express();
 
@@ -44,13 +45,8 @@ app.post('/login', async (req, res) => {
     const userRole = await updateConnectionDetails(username, password);
     if (userRole != null) {
         req.session.user = { username };
-        res.send(`
-          <script>
-            alert("You are ${userRole}!");
-            window.location.href = '/your_desired_route_after_login';
-          </script>
-        `);
-        // res.redirect('/api');  
+        res.redirect('/');  
+
     } else {
         res.send(`
             <script>
@@ -70,7 +66,7 @@ app.use((req, res, next) => {
         res.redirect('/login');
     }
 });
-
+app.use(express.static(path.join(__dirname, 'public', 'build')));
 
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/products', productRoutes);

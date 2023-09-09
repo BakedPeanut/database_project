@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Category = require('../models/category');
+const ProductAttribute = require('../models/productAttribute');
+
 const { getUserID } = require('../connector/mysql');
 
 // Create Category
@@ -14,7 +16,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Add attribute
 
 // Read all Categories
 router.get('/', async (req, res) => {
@@ -103,26 +104,41 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete Category
+router.delete('/', async (req, res) => {
+    try {
+
+        const results = await Category.deleteMany();
+        res.status(200).send("ok");
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+// Delete Category
 router.delete('/:id', async (req, res) => {
     try {
-        const category = await Category.findByIdAndDelete(req.params.id);
-        if (!category) return res.status(404).send();
-        res.status(200).send(category);
+
+        const results = await getRowsByAttributeList(req.params.id);
+        // const category = await Category.findByIdAndDelete(req.params.id);
+        if (results.length > 0) {
+            res.status(200).send(results);
+        } else {
+            res.status(500).send("Products assocciate with this category");
+
+        }
     } catch (error) {
         res.status(500).send(error);
     }
 });
 
 // Define the POST route to add data to the database
-router.post('/addProductAttribute', async (req, res) => {
+router.post('/attribute/product', async (req, res) => {
     try {
       const productAttributeData = req.body; // Assuming the request body contains the JSON data
   
       // Create a new ProductAttribute document and save it to the database
-      const productAttribute = new ProductAttribute(productAttributeData);
-      await productAttribute.save();
-  
-      res.status(201).json({ message: 'ProductAttribute added successfully' });
+      await ProductAttribute.insertMany(productAttributeData);
+      res.status(201).json({ message: 'ProductAttributes added successfully' });
+
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });
@@ -153,4 +169,40 @@ async function getAllAttributes(categoryId) {
 
     return attributes;
 }
+
+async function getRowsByAttributeList(categoryId) {
+    try {
+      // Step 1: Get the list of _id values from getAllAttributes(req.params.id)
+      const attributeList = await getAllAttributes(categoryId);
+      
+      // Extract _id values from the attributeList
+      const attributeIds = attributeList.map((attribute) => attribute._id);
+  
+      // Step 2: Get all rows of ProductAttribute with the extracted _id values
+      const rows = await ProductAttribute.find({ attributeID: { $in: attributeIds } });
+      return rows;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  
+    async function checkAndInsertAttributes() {
+        try {
+        // Check if the Attribute collection is empty
+        const count = await ProductAttribute.countDocuments();
+    
+        if (count === 0) {
+            // If there are no documents, insert the data
+            await ProductAttribute.insertMany(mockData);
+            console.log('Data inserted successfully.');
+        }
+        } catch (error) {
+        console.error('Error:', error);
+        }
+    }
+    
+    // Call the function to check and insert data
+    checkAndInsertAttributes();
 module.exports = router;

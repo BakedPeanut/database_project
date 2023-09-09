@@ -58,14 +58,14 @@ app.post('/login', async (req, res) => {
 });
 
 
-// isAuthenticated Middleware
-app.use((req, res, next) => {
-    if (req.session && req.session.user) {
-        next();
-    } else {
-        res.redirect('/login');
-    }
-});
+// // isAuthenticated Middleware
+// app.use((req, res, next) => {
+//     if (req.session && req.session.user) {
+//         next();
+//     } else {
+//         res.redirect('/login');
+//     }
+// });
 app.use(express.static(path.join(__dirname, 'public', 'build')));
 
 app.use('/api/warehouses', warehouseRoutes);

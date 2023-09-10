@@ -36,7 +36,7 @@ router.put('/', async (req, res) => {
 router.post('/accept/:id', async (req, res) => {
     try {
         const customerId = getUserID();
-        const result = await Order.placeOrder(customerId);
+        const result = await Order.updateStatus(customerId, true);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -46,7 +46,7 @@ router.post('/accept/:id', async (req, res) => {
 router.post('/reject/:id', async (req, res) => {
     try {
         const customerId = getUserID();
-        const result = await Order.placeOrder(customerId);
+        const result = await Order.updateStatus(customerId, false);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });

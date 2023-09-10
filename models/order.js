@@ -19,16 +19,44 @@ class Order {
     }
 
     // get all order from the customer
-    static async fetchById(id) {
+    static async fetchById(orderId) {
         try {
-            const query = "SELECT Orders.orderId, Orders.orderStatus, OrderDetail.orderDetailId, OrderDetail.productId, OrderDetail.quantity FROM Orders LEFT JOIN OrderDetail ON Orders.orderId = OrderDetail.orderId WHERE Orders.customerID = ?";
-            const [result] = await db.pool.query(query, [id]);
-            return result[0];
+            const query = `
+                SELECT 
+                    Orders.orderId, 
+                    Orders.orderStatus, 
+                    GROUP_CONCAT(
+                        JSON_OBJECT(
+                            'title', Product.title,
+                            'price', Product.price,
+                            'img', Product.img,
+                            'quantity', OrderDetail.quantity
+                        )
+                    ) AS orderDetails
+                FROM Orders
+                LEFT JOIN OrderDetail ON Orders.orderId = OrderDetail.orderId
+                LEFT JOIN Product ON OrderDetail.productId = Product.id
+                WHERE Orders.customerID = ?
+                GROUP BY Orders.orderId`;
+            
+            const [result] = await db.pool.query(query, [orderId]);
+            
+            if (result.length === 0) {
+                return null; // Order not found
+            }
+            
+            const order = {
+                orderId: result[0].orderId,
+                orderStatus: result[0].orderStatus,
+                orderDetails: JSON.parse(`[${result[0].orderDetails}]`)
+            };
+            
+            return order;
         } catch (err) {
             throw err;
         }
-      
     }
+    
 
     // Method to update status of the order
     static async update(id, accept) {

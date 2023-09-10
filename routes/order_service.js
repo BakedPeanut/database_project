@@ -3,27 +3,30 @@ const Order = require('../models/order');
 const router = express.Router();
 const { getUserID } = require('../connector/mysql');
 
-router.post('/:id', async (req, res) => {
+router.post('/', async (req, res) => {
     try {
-        const result = await Order.placeOrder(req.params.id);
+        const customerId = getUserID();
+        const result = await Order.placeOrder(customerId);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        const order = await Order.fetchById(req.params.id);
-        res.status(200).json(order);
+        const customerId = 5;
+        const order = await Order.fetchById(customerId);
+        const ordersArray = Array.isArray(order) ? result : [order];
+        res.status(200).json(ordersArray);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/', async (req, res) => {
     try {
-        await Order.update(req.params.id, req.body);
+        await Order.update(getUserID, req.body);
         res.status(200).json({ message: 'Updated successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -98,84 +98,84 @@ class Warehouse {
     }
 
     // Function to move a number of copies of a product from one to another warehouse
-    static async moveProduct(sourceWarehouseId, destinationWarehouseId, productId, quantity) {
-        const connection = await db.pool.getConnection();
-    
-        try {
-            // Start transaction
-            await connection.beginTransaction();
-    
-            // Calculate the product volume for a single unit
-            const calculateVolumeQuery = "SELECT (width * length * height) AS unitVolume FROM product WHERE id = ?";
-            const [productVolumeResult] = await connection.query(calculateVolumeQuery, productId);
-            const unitVolume = productVolumeResult[0].unitVolume;
-    
-            // Get the quantity of the product in the source warehouse
-            const sourceWarehouseQuantityQuery = "SELECT quantity FROM WarehouseProduct WHERE productId = ? AND warehouseId = ?";
-            const [sourceWarehouseResult] = await connection.query(sourceWarehouseQuantityQuery, [productId, sourceWarehouseId]);
+        static async moveProduct(sourceWarehouseId, destinationWarehouseId, productId, quantity) {
+            const connection = await db.pool.getConnection();
+            
+            try {
+                // Start transaction
+                await connection.beginTransaction({ isolationLevel: 'SERIALIZABLE' });
+        
+                // Calculate the product volume for a single unit
+                const calculateVolumeQuery = "SELECT (width * length * height) AS unitVolume FROM product WHERE id = ?";
+                const [productVolumeResult] = await connection.query(calculateVolumeQuery, productId);
+                const unitVolume = productVolumeResult[0].unitVolume;
+        
+                // Get the quantity of the product in the source warehouse
+                const sourceWarehouseQuantityQuery = "SELECT quantity FROM WarehouseProduct WHERE productId = ? AND warehouseId = ?";
+                const [sourceWarehouseResult] = await connection.query(sourceWarehouseQuantityQuery, [productId, sourceWarehouseId]);
 
-            // Inconsistent database - the product cannot be found in the sources or the quantity is not consistent
-            if (!sourceWarehouseResult.length || sourceWarehouseResult[0].quantity < quantity) {
-                throw new Error("Insufficient product quantity in the specified source warehouse");
-            }
-    
-            const totalProductVolume = unitVolume * quantity;
-    
-            // Check available volume in the destination warehouse
-            const checkSpaceQuery = "SELECT volume FROM warehouse WHERE id = ?";
-            const [destinationVolumeResult] = await connection.query(checkSpaceQuery, destinationWarehouseId);
-            const destinationVolume = destinationVolumeResult[0].volume;
-
-            // Check if volume of the products in shipping of the destination warehouse
-            const desOrderVolumeQuery = "SELECT SUM(volume) FROM OrderProduct WHERE warehouseID = ?";
-            const [desOrderVolumeResult] = await connection.query(desOrderVolumeQuery, destinationWarehouseId);
-            var desOrderVolume = desOrderVolumeResult[0].volume;
-            // Assign 0 if undefinded
-            if (typeof desOrderVolume === 'undefined') {
-                desOrderVolume = 0;
-            }       
-            // Check if the new warehouse has it enough space
-            if (destinationVolume - desOrderVolume >= totalProductVolume) {
-    
-                // Reduce the quantity in the source warehouse
-                const updateSourceWarehouseProductQuery = "UPDATE WarehouseProduct SET quantity = quantity - ? WHERE productId = ? AND warehouseId = ?";
-                await connection.query(updateSourceWarehouseProductQuery, [quantity, productId, sourceWarehouseId]);
-    
-                // Check if quantity of the product in the source warehouse is now zero, and delete if so
-                const checkZeroQuantitySourceQuery = "SELECT quantity FROM WarehouseProduct WHERE productId = ? AND warehouseId = ?";
-                const [sourceQuantityResult] = await connection.query(checkZeroQuantitySourceQuery, [productId, sourceWarehouseId]);
-                if (sourceQuantityResult[0].quantity == 0) {
-                    const deleteSourceWarehouseProductQuery = "DELETE FROM WarehouseProduct WHERE productId = ? AND warehouseId = ?";
-                    await connection.query(deleteSourceWarehouseProductQuery, [productId, sourceWarehouseId]);
+                // Inconsistent database - the product cannot be found in the sources or the quantity is not consistent
+                if (!sourceWarehouseResult.length || sourceWarehouseResult[0].quantity < quantity) {
+                    throw new Error("Insufficient product quantity in the specified source warehouse");
                 }
-                // Insert or update the product relationship with the destination warehouse
-                const insertOrUpdateDestinationWarehouseProductQuery = `
-                    INSERT INTO WarehouseProduct (productId, warehouseId, quantity) 
-                    VALUES (?, ?, ?) 
-                    ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)
-                `;
-                await connection.query(insertOrUpdateDestinationWarehouseProductQuery, [productId, destinationWarehouseId, quantity]);
-    
-                // Update the volume in destination warehouse
-                const updateDestinationVolumeQuery = "UPDATE warehouse SET volume = volume - ? WHERE id = ?";
-                await connection.query(updateDestinationVolumeQuery, [totalProductVolume, destinationWarehouseId]);
-    
-                // Update the volume in source warehouse
-                const updateSourceVolumeQuery = "UPDATE warehouse SET volume = volume + ? WHERE id = ?";
-                await connection.query(updateSourceVolumeQuery, [totalProductVolume, sourceWarehouseId]);
-    
-                await connection.commit();
-                return "Product moved successfully.";
-            } else {
+        
+                const totalProductVolume = unitVolume * quantity;
+        
+                // Check available volume in the destination warehouse
+                const checkSpaceQuery = "SELECT volume FROM warehouse WHERE id = ?";
+                const [destinationVolumeResult] = await connection.query(checkSpaceQuery, destinationWarehouseId);
+                const destinationVolume = destinationVolumeResult[0].volume;
+
+                // Check if volume of the products in shipping of the destination warehouse
+                const desOrderVolumeQuery = "SELECT SUM(volume) FROM OrderProduct WHERE warehouseID = ?";
+                const [desOrderVolumeResult] = await connection.query(desOrderVolumeQuery, destinationWarehouseId);
+                var desOrderVolume = desOrderVolumeResult[0].volume;
+                // Assign 0 if undefinded
+                if (typeof desOrderVolume === 'undefined') {
+                    desOrderVolume = 0;
+                }       
+                // Check if the new warehouse has it enough space
+                if (destinationVolume - desOrderVolume >= totalProductVolume) {
+        
+                    // Reduce the quantity in the source warehouse
+                    const updateSourceWarehouseProductQuery = "UPDATE WarehouseProduct SET quantity = quantity - ? WHERE productId = ? AND warehouseId = ?";
+                    await connection.query(updateSourceWarehouseProductQuery, [quantity, productId, sourceWarehouseId]);
+        
+                    // Check if quantity of the product in the source warehouse is now zero, and delete if so
+                    const checkZeroQuantitySourceQuery = "SELECT quantity FROM WarehouseProduct WHERE productId = ? AND warehouseId = ?";
+                    const [sourceQuantityResult] = await connection.query(checkZeroQuantitySourceQuery, [productId, sourceWarehouseId]);
+                    if (sourceQuantityResult[0].quantity == 0) {
+                        const deleteSourceWarehouseProductQuery = "DELETE FROM WarehouseProduct WHERE productId = ? AND warehouseId = ?";
+                        await connection.query(deleteSourceWarehouseProductQuery, [productId, sourceWarehouseId]);
+                    }
+                    // Insert or update the product relationship with the destination warehouse
+                    const insertOrUpdateDestinationWarehouseProductQuery = `
+                        INSERT INTO WarehouseProduct (productId, warehouseId, quantity) 
+                        VALUES (?, ?, ?) 
+                        ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)
+                    `;
+                    await connection.query(insertOrUpdateDestinationWarehouseProductQuery, [productId, destinationWarehouseId, quantity]);
+        
+                    // Update the volume in destination warehouse
+                    const updateDestinationVolumeQuery = "UPDATE warehouse SET volume = volume - ? WHERE id = ?";
+                    await connection.query(updateDestinationVolumeQuery, [totalProductVolume, destinationWarehouseId]);
+        
+                    // Update the volume in source warehouse
+                    const updateSourceVolumeQuery = "UPDATE warehouse SET volume = volume + ? WHERE id = ?";
+                    await connection.query(updateSourceVolumeQuery, [totalProductVolume, sourceWarehouseId]);
+        
+                    await connection.commit();
+                    return "Product moved successfully.";
+                } else {
+                    await connection.rollback();
+                    return "Destination warehouse does not have enough space.";
+                }
+            } catch (error) {
                 await connection.rollback();
-                return "Destination warehouse does not have enough space.";
+                throw error;
+            } finally {
+                connection.release();
             }
-        } catch (error) {
-            await connection.rollback();
-            throw error;
-        } finally {
-            connection.release();
         }
-    }
 }
 module.exports = Warehouse;

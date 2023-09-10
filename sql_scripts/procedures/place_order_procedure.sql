@@ -1,6 +1,5 @@
 	USE database_project;
-
-	drop procedure PlaceOrder;
+	drop procedure placeorder;
 	DELIMITER //
 
 	CREATE PROCEDURE PlaceOrder(
@@ -32,6 +31,7 @@
 		END;
 		
 		DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+        
 		SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
 		start transaction;
@@ -42,11 +42,11 @@
 		OPEN cart_cursor;
 		
 		cart_loop: LOOP
+			FETCH cart_cursor INTO v_cartDetailId, v_productId, v_quantity;
 			IF done = 1 THEN
+				CLOSE cart_cursor;
 				LEAVE cart_loop;
 			END IF;
-			FETCH cart_cursor INTO v_cartDetailId, v_productId, v_quantity;
-
 			-- Check product availability
 			SELECT inStock INTO v_inStock FROM Product WHERE id = v_productId;
 
@@ -69,7 +69,6 @@
 			END IF;
 		END LOOP;
 		
-		CLOSE cart_cursor;
 		   
 		IF cartCount = 0 THEN
 			select 'no items in stock or the cart empty' as message;

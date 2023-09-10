@@ -58,9 +58,9 @@ ALTER TABLE Product ADD INDEX idx_category(category);
 
 -- Partitioning by year of addedTime
 ALTER TABLE Product PARTITION BY RANGE(YEAR(addedTime)) (
-    PARTITION p2021 VALUES LESS THAN (2022),
-    PARTITION p2022 VALUES LESS THAN (2023),
-    PARTITION p2023 VALUES LESS THAN (2024)
+    PARTITION p2021 VALUES LESS THAN (2021),
+    PARTITION p2022 VALUES LESS THAN (2022),
+    PARTITION p2023 VALUES LESS THAN (2023)
 );
 
 ALTER TABLE Product
@@ -143,25 +143,24 @@ INSERT INTO USER (username, password, role) values
 ('customer3', '$2a$12$Vjd51thruZsJPu/gswEs/Oa8KRDWHSh9dbTbKbgHOZcYyR611uaZq', 'CUSTOMER'); -- lastcustomer
 
 INSERT INTO Product (width, length, height, inStock, title, description, price, img, category, sellerID) VALUES
-(7, 14, 1, 100, 'Galaxy Superior X', 'Latest flagship model with 5G support', 899.99, 'galaxy_superior_x.jpg', 4, 1), 
-(6, 12, 1, 200, 'Galaxy Budget Z', 'Affordable phone with decent performance', 299.99, 'galaxy_budget_z.jpg', 5, 2), 
-(7, 14, 1, 150, 'Pixel Prime 6', 'Flagship phone with the best camera', 949.99, 'pixel_prime_6.jpg', 4, 3), 
-(6, 12, 1, 220, 'Pixel Budget Y', 'Cost-effective Pixel experience', 329.99, 'pixel_budget_y.jpg', 5, 1), 
-(5, 10, 1, 50, 'Nokia Tough 3310', 'Durable phone for all conditions', 49.99, 'nokia_tough_3310.jpg', 8, 2), 
-(16, 26, 2, 100, 'Razer Blitz', 'High-end gaming laptop with RTX 3080', 1999.99, 'razer_blitz.jpg', 9, 3), 
-(15, 25, 2, 180, 'Asus TUF Warrior', 'Budget gaming laptop with great performance', 999.99, 'asus_tuf_warrior.jpg', 10, 1), 
-(14, 24, 1, 300, 'Dell WorkPro X9', 'Laptop designed for business efficiency', 849.99, 'dell_workpro_x9.jpg', 11, 2), 
-(16, 26, 2, 90, 'Alienware Pulsar', 'Top-tier gaming experience with sleek design', 2199.99, 'alienware_pulsar.jpg', 9, 3), 
-(15, 25, 2, 170, 'Lenovo BattleBox', 'Budget gaming with robust build', 949.99, 'lenovo_battlebox.jpg', 10, 1), 
-(15, 23, 1, 250, 'HP EliteBook 850', 'Business laptop with secure features', 799.99, 'hp_elitebook_850.jpg', 11, 2), 
-(7, 15, 1, 80, 'OnePlus Ultra 9', 'OnePlus flagship with warp charging', 799.99, 'oneplus_ultra_9.jpg', 4, 3), 
-(6, 13, 1, 190, 'OnePlus Lite Z', 'OnePlus budget phone with smooth OS', 349.99, 'oneplus_lite_z.jpg', 5, 1), 
-(16, 27, 2, 70, 'MSI DragonBlade', 'Ultra-performance gaming laptop', 2299.99, 'msi_dragonblade.jpg', 9, 2), 
-(14, 23, 1, 330, 'Acer Swift 5', 'Lightweight business laptop', 749.99, 'acer_swift_5.jpg', 11, 3), 
-(7, 14, 1, 90, 'iPhone 14 Pro', 'Apple flagship with advanced features', 999.99, 'iphone_14_pro.jpg', 4, 1), 
-(6, 12, 1, 210, 'iPhone 14', 'New generation iPhone for everyone', 799.99, 'iphone_14.jpg', 5, 2), 
-(15, 25, 2, 60, 'Macbook Pro 16"', 'Apple laptop for professionals', 2399.99, 'macbook_pro_16.jpg', 9, 3), 
-(15, 24, 2, 140, 'Macbook Air M2', 'Lightweight and powerful Apple laptop', 1199.99, 'macbook_air_m2.jpg', 10, 1);
+(6, 12, 1, 200, 'Galaxy Budget Z', 'Affordable phone with decent performance', 299.99, 'https://m-cdn.phonearena.com/images/review/5409-wide-two_1200/Google-Pixel-7-vs-Samsung-Galaxy-S22-comparison.webp?1691666375', 5, 2), 
+(7, 14, 1, 150, 'Pixel Prime 6', 'Flagship phone with the best camera', 949.99, 'https://media.wired.com/photos/5dae0207c96358000859e5a9/master/w_1920,c_limit/Gear-Google-Pixel-4-Front-and-Back-SOURCE-Google.jpg', 4, 3), 
+(6, 12, 1, 220, 'Pixel Budget Y', 'Cost-effective Pixel experience', 329.99, 'https://i.pcmag.com/imagery/reviews/03POP0TjDjuXonJXI16Omn2-1.fit_lim.size_120x68.v1663720055.jpg', 5, 1), 
+(5, 10, 1, 50, 'Nokia Tough 3310', 'Durable phone for all conditions', 49.99, 'https://i.pcmag.com/imagery/reviews/03p2iTAnz70cDaIzG1K6rex-4.fit_lim.size_120x68.v1683600968.jpg', 8, 2), 
+(16, 26, 2, 100, 'Razer Blitz', 'High-end gaming laptop with RTX 3080', 1999.99, 'https://cdn.thewirecutter.com/wp-content/media/2022/10/laptopstopicpage-2048px-2102-2x1-1.jpg', 9, 3), 
+(15, 25, 2, 180, 'Asus TUF Warrior', 'Budget gaming laptop with great performance', 999.99, 'https://cdn.thewirecutter.com/wp-content/media/2023/09/windowsultrabooks-2048px-02832.jpg', 10, 1), 
+(14, 24, 1, 300, 'Dell WorkPro X9', 'Laptop designed for business efficiency', 849.99, 'https://cdn.thewirecutter.com/wp-content/media/2023/06/bestlaptops-2048px-9765.jpg', 11, 2), 
+(16, 26, 2, 90, 'Alienware Pulsar', 'Top-tier gaming experience with sleek design', 2199.99, 'https://cdn.tgdd.vn/Products/Images/44/304867/asus-tuf-gaming-f15-fx506hf-i5-hn014w-thumb-600x600.jpg', 9, 3), 
+(15, 25, 2, 170, 'Lenovo BattleBox', 'Budget gaming with robust build', 949.99, 'https://cdn.tgdd.vn/Products/Images/44/309600/lenovo-ideapad-3-15itl6-i5-82h803rrvn-thumb-600x600.jpg', 10, 1), 
+(15, 23, 1, 250, 'HP EliteBook 850', 'Business laptop with secure features', 799.99, 'https://cdn.tgdd.vn/Products/Images/44/309721/lenovo-ideapad-3-15itl6-i3-82h803sgvn-thumb-600x600.jpg', 11, 2), 
+(7, 15, 1, 80, 'OnePlus Ultra 9', 'OnePlus flagship with warp charging', 799.99, 'https://cdn2.cellphones.com.vn/358x358,webp,q100/media/catalog/product/o/n/oneplus_11_-_black_-_rgb_1.jpg', 4, 3), 
+(6, 13, 1, 190, 'OnePlus Lite Z', 'OnePlus budget phone with smooth OS', 349.99, 'https://cdn2.cellphones.com.vn/358x358,webp,q100/media/catalog/product/o/n/oneplus-nord-3.png', 5, 1), 
+(16, 27, 2, 70, 'MSI DragonBlade', 'Ultra-performance gaming laptop', 2299.99, 'https://cdn.tgdd.vn/Products/Images/44/282827/apple-macbook-air-m2-2022-bac-600x600.jpg', 9, 2), 
+(14, 23, 1, 330, 'Acer Swift 5', 'Lightweight business laptop', 749.99, 'https://cdn.tgdd.vn/Products/Images/44/306133/msi-gaming-gf63-thin-11uc-i7-1228vn-thumb-600x600.jpg', 11, 3), 
+(7, 14, 1, 90, 'iPhone 14 Pro', 'Apple flagship with advanced features', 999.99, 'https://cdn.tgdd.vn/Products/Images/42/251192/iphone-14-pro-max-tim-thumb-600x600.jpg', 4, 1), 
+(6, 12, 1, 210, 'iPhone 14', 'New generation iPhone for everyone', 799.99, 'https://cdn.tgdd.vn/Products/Images/42/307556/xiaomi-redmi-12-bac-thumb-600x600.jpg', 5, 2), 
+(15, 25, 2, 60, 'Macbook Pro 16"', 'Apple laptop for professionals', 2399.99, 'https://cdn.tgdd.vn/Products/Images/44/302150/macbook-pro-16-inch-m2-pro-1tb-180123-011703-600x600.jpg', 9, 3), 
+(15, 24, 2, 140, 'Macbook Air M2', 'Lightweight and powerful Apple laptop', 1199.99, 'https://cdn.tgdd.vn/Products/Images/44/231244/macbook-air-m1-2020-gray-600x600.jpg', 10, 1);
 
 INSERT INTO WarehouseProduct (warehouseId, productId, quantity) VALUES
 -- Product 1

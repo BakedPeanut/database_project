@@ -139,7 +139,8 @@ router.delete('/delete/:id', async (req, res) => {
 // Get all products
 router.get('/', async (req, res) => {
     try {
-        const products = await Product.selectAll();
+        const userID = getUserID();
+        const products = await Product.selectAll(2);
         res.status(200).json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });

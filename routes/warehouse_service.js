@@ -42,7 +42,7 @@ router.delete('/:id', async (req, res) => {
         if (result === "Warehouse deleted successfully.") {
             res.status(200).json({ message: result }); // Success response
         } else {
-            res.status(400).json({ message: result }); // Bad request, indicating that deletion wasn't possible due to associated products
+            res.status(500).json({ message: result }); // Bad request, indicating that deletion wasn't possible due to associated products
         }
     } catch (error) {
         res.status(500).json({ message: error.message });

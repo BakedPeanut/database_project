@@ -27,15 +27,15 @@ connectMongoDB();
 // Login routes
 app.get('/login', (req, res) => {
     res.send(`
-        <form action="/login" method="post">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username">
-            <br><br>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password">
-            <br><br>
-            <input type="submit" value="Login">
-        </form>
+    <form action="/login" method="post">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username">
+    <br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password">
+    <br><br>
+    <input type="submit" value="Login">
+</form>
     `);
 });
 
@@ -45,7 +45,13 @@ app.post('/login', async (req, res) => {
     const userRole = await updateConnectionDetails(username, password);
     if (userRole != null) {
         req.session.user = { username };
-        res.redirect('/');  
+        if(userRole === "ADMIN") {
+            res.redirect('/warehouse');  
+        } else if (userRole === "SELLER") {
+            res.redirect('/seller');  
+        } else {
+            res.redirect('/');  
+        }
 
     } else {
         res.send(`
@@ -57,17 +63,36 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+      if (err) {
+        console.error('Error destroying session:', err);
+      }
+      res.redirect('/login'); // Redirect to the login page or any other desired route
+    });
+  });
 
-// // isAuthenticated Middleware
-// app.use((req, res, next) => {
-//     if (req.session && req.session.user) {
-//         next();
-//     } else {
-//         res.redirect('/login');
-//     }
-// });
+
+// isAuthenticated Middleware
+app.use((req, res, next) => {
+    if (req.session && req.session.user) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+});
 app.use(express.static(path.join(__dirname, 'public', 'build')));
+app.use(express.static(path.join(__dirname, 'public_2')));
 
+app.get('/warehouse', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public_2', 'warehouse.html'));
+  });
+app.get('/seller', (req, res) => {
+res.sendFile(path.join(__dirname, 'public_2', 'products.html'));
+});
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'build'));
+  });
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/carts', cartRoutes);

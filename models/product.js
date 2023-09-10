@@ -120,11 +120,12 @@ class Product {
     }
     
     // Get all product 
-    static async selectAll() {
+    static async selectAll(sellerID) {
         try {
-            const query = "SELECT * FROM product";
-            const [results] = await db.pool.query(query);
-            return results[0];
+            const connection = await db.pool.getConnection();
+            const query = "SELECT * FROM product WHERE sellerID = ?";
+            const [results] = await connection.query(query, [sellerID]);
+            return results;
 
         } catch (err) {
             throw err;

@@ -45,67 +45,70 @@ router.post('/', async (req, res) => {
 router.get('/:categoryID', async (req, res) => {
     let whereConditions = [];
     let queryParams = [];
-
-    // Search by keyword
+    
+    // Search by keyword in Product_FullText
     if (req.query.keyword) {
-        whereConditions.push("(title LIKE ? OR description LIKE ?)");
-        queryParams.push('%' + req.query.keyword + '%', '%' + req.query.keyword + '%');
+        whereConditions.push(`MATCH(pf.title, pf.description) AGAINST (?)`);
+        queryParams.push(req.query.keyword);
     }
-
+    
     // Filter by category
     const categoryID = req.params.categoryID;
-
+    
     if (categoryID != 0) {
         const categoryList = await getAllCategoryIds(categoryID);
-
+    
         // Check if no valid category IDs are found
         if (categoryList.length === 0) {
             return res.status(400).json({ error: 'Invalid category ID' });
         }
-
-        whereConditions.push(`category IN (?)`);
+    
+        whereConditions.push(`p.category IN (?)`);
         queryParams.push(categoryList);
     }
-
+    
     // Filter by price range
-    if (req.query.startPrice && ! req.query.endPrice) {
-        whereConditions.push("price >  ? ");
-        queryParams.push(parseFloat(req.query.startPrice).toFixed(2) );
-    } else if (!req.query.startPrice &&  req.query.endPrice) {
-        whereConditions.push("price < ?");
-        queryParams.push(parseFloat(req.query.endPrice).toFixed(2) );
+    if (req.query.startPrice && !req.query.endPrice) {
+        whereConditions.push("p.price > ?");
+        queryParams.push(parseFloat(req.query.startPrice).toFixed(2));
+    } else if (!req.query.startPrice && req.query.endPrice) {
+        whereConditions.push("p.price < ?");
+        queryParams.push(parseFloat(req.query.endPrice).toFixed(2));
+    } else if (req.query.startPrice && req.query.endPrice) {
+        whereConditions.push("p.price BETWEEN ? AND ?");
+        queryParams.push(parseFloat(req.query.startPrice).toFixed(2), parseFloat(req.query.endPrice).toFixed(2));
     }
-    else if (req.query.startPrice && req.query.endPrice) {
-        whereConditions.push("price BETWEEN ? AND ?");
-        queryParams.push(req.query.startPrice, req.query.endPrice);
-    }
-
+    
     // Sorting
-    let sortBy = 'addedTime';  // default sort
-    let sortDir = 'DESC';      // default direction
-
+    let sortBy = 'p.addedTime';  // default sort
+    let sortDir = 'DESC';        // default direction
+    
     if (req.query.sortBy) {
-        if (['price', 'date'].includes(req.query.sortBy)) {
-            if (req.query.sortBy === 'date')
-                sortBy = 'addedTime';
-            else {
-                sortBy = req.query.sortBy;
+        if (['price', 'addedTime'].includes(req.query.sortBy)) {
+            if (req.query.sortBy === 'date') {
+                sortBy = 'p.addedTime';
+            } else {
+                sortBy = 'p.' + req.query.sortBy;
             }
         }
     }
-
+    
     if (req.query.sortDir) {
         if (['asc', 'desc'].includes(req.query.sortDir.toLowerCase())) {
             sortDir = req.query.sortDir.toUpperCase();
         }
     }
 
-    const sqlQuery = `
-        SELECT * FROM Product 
-        ${whereConditions.length ? "WHERE " + whereConditions.join(' AND ') : ""}
-        ORDER BY ${sortBy} ${sortDir}
-    `;
 
+    const sqlQuery = `
+        SELECT p.* 
+        FROM Product p
+        LEFT JOIN Product_FullText pf ON p.id = pf.productID
+        ${whereConditions.length ? "WHERE " + whereConditions.join(' AND ') : ""}
+        ORDER BY 
+            ${sortBy} ${sortDir}
+    `;
+    
     try {
         const results = await Product.queryProduct(sqlQuery, queryParams);
         res.json(results);
@@ -114,6 +117,7 @@ router.get('/:categoryID', async (req, res) => {
         res.status(500).json({ error: 'Database query error' });
     }
 });
+
 
 
 // Update product
@@ -157,6 +161,7 @@ async function getAllCategoryIds(categoryId) {
   const categoryIds = [category._id];
 
   async function getChildrenIds(parentId) {
+
     const children = await Category.find({ parent: parentId }).exec();
     for (const child of children) {
       categoryIds.push(child._id);

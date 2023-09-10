@@ -2,6 +2,57 @@
 CREATE DATABASE IF NOT EXISTS database_project;
 USE database_project;
 
+-- Product table
+CREATE TABLE IF NOT EXISTS Product (
+    id INT AUTO_INCREMENT,
+    width INT NOT NULL,
+    length INT NOT NULL,
+    height INT NOT NULL,
+    inStock INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255),
+    price DECIMAL(10,2) NOT NULL,
+    img VARCHAR(255) NOT NULL,
+    category INT NOT NULL,
+    addedTime DATETIME DEFAULT CURRENT_TIMESTAMP,
+    sellerID INT,
+    PRIMARY KEY (id, price, addedTime)  -- Define a composite primary key
+) ENGINE=InnoDB;
+
+
+-- Index for price
+ALTER TABLE Product ADD INDEX idx_price(price);
+
+-- Index for addedTime
+ALTER TABLE Product ADD INDEX idx_addedTime(addedTime);
+
+-- Index for category
+ALTER TABLE Product ADD INDEX idx_category(category);
+
+-- Create the Product_FullText table (if not already created)
+CREATE TABLE IF NOT EXISTS Product_FullText (
+    id INT AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255),
+    productID INT,
+    FULLTEXT (title, description),
+    PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
+-- Partitioning by year of addedTime
+ALTER TABLE Product PARTITION BY RANGE(YEAR(addedTime)) (
+    PARTITION p2021 VALUES LESS THAN (2021),
+    PARTITION p2022 VALUES LESS THAN (2022),
+    PARTITION p2023 VALUES LESS THAN (2023)
+);
+
+ALTER TABLE Product
+PARTITION BY RANGE(FLOOR(price)) (
+    PARTITION budget VALUES LESS THAN (100),
+    PARTITION mid_range VALUES LESS THAN (500),
+    PARTITION high_end VALUES LESS THAN (MAXVALUE)
+);
+
 -- Creating the Warehouse table
 CREATE TABLE IF NOT EXISTS Warehouse (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -21,54 +72,6 @@ CREATE TABLE User (
     role ENUM('ADMIN', 'SELLER', 'CUSTOMER') NOT NULL
 ) ENGINE=InnoDB;
 
--- Product table
-CREATE TABLE IF NOT EXISTS Product (
-    id INT AUTO_INCREMENT,
-    width INT NOT NULL,
-    length INT NOT NULL,
-    height INT NOT NULL,
-    inStock INT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description VARCHAR(255),
-    price DECIMAL(10,2) NOT NULL,
-    img VARCHAR(255) NOT NULL,
-    category INT NOT NULL,
-    addedTime DATETIME DEFAULT CURRENT_TIMESTAMP,
-    sellerID INT,
-    PRIMARY KEY (id, price, addedTime)  -- Define a composite primary key
-) ENGINE=InnoDB;
-
--- Index for title
-ALTER TABLE Product ADD INDEX idx_title(title);
-
--- Index for description
-ALTER TABLE Product ADD INDEX idx_description(description);
-
--- Composite index for title and description
-ALTER TABLE Product ADD INDEX idx_title_description(title, description);
-
--- Index for price
-ALTER TABLE Product ADD INDEX idx_price(price);
-
--- Index for addedTime
-ALTER TABLE Product ADD INDEX idx_addedTime(addedTime);
-
--- Index for category
-ALTER TABLE Product ADD INDEX idx_category(category);
-
--- Partitioning by year of addedTime
-ALTER TABLE Product PARTITION BY RANGE(YEAR(addedTime)) (
-    PARTITION p2021 VALUES LESS THAN (2021),
-    PARTITION p2022 VALUES LESS THAN (2022),
-    PARTITION p2023 VALUES LESS THAN (2023)
-);
-
-ALTER TABLE Product
-PARTITION BY RANGE(FLOOR(price)) (
-    PARTITION budget VALUES LESS THAN (100),
-    PARTITION mid_range VALUES LESS THAN (500),
-    PARTITION high_end VALUES LESS THAN (MAXVALUE)
-);
 -- WarehouseProduct Relationship table
 CREATE TABLE IF NOT EXISTS WarehouseProduct (
 	warehouseId INT NOT NULL,
@@ -162,6 +165,28 @@ INSERT INTO Product (width, length, height, inStock, title, description, price, 
 (15, 25, 2, 60, 'Macbook Pro 16"', 'Apple laptop for professionals', 2399.99, 'https://cdn.tgdd.vn/Products/Images/44/302150/macbook-pro-16-inch-m2-pro-1tb-180123-011703-600x600.jpg', 9, 3), 
 (15, 24, 2, 140, 'Macbook Air M2', 'Lightweight and powerful Apple laptop', 1199.99, 'https://cdn.tgdd.vn/Products/Images/44/231244/macbook-air-m1-2020-gray-600x600.jpg', 10, 1);
 
+INSERT INTO Product_FullText (title, description) VALUES
+('Galaxy Budget Z', 'Affordable phone with decent performance'),
+('Pixel Prime 6', 'Flagship phone with the best camera'),
+('Pixel Budget Y', 'Cost-effective Pixel experience'),
+('Nokia Tough 3310', 'Durable phone for all conditions'),
+('Razer Blitz', 'High-end gaming laptop with RTX 3080'),
+('Asus TUF Warrior', 'Budget gaming laptop with great performance'),
+('Dell WorkPro X9', 'Laptop designed for business efficiency'),
+('Alienware Pulsar', 'Top-tier gaming experience with sleek design'),
+('Lenovo BattleBox', 'Budget gaming with robust build'),
+('HP EliteBook 850', 'Business laptop with secure features'),
+('OnePlus Ultra 9', 'OnePlus flagship with warp charging'),
+('OnePlus Lite Z', 'OnePlus budget phone with smooth OS'),
+('MSI DragonBlade', 'Ultra-performance gaming laptop'),
+('Acer Swift 5', 'Lightweight business laptop'),
+('iPhone 14 Pro', 'Apple flagship with advanced features'),
+('iPhone 14', 'New generation iPhone for everyone'),
+('Macbook Pro 16"', 'Apple laptop for professionals'),
+('Macbook Air M2', 'Lightweight and powerful Apple laptop');
+
+
+
 INSERT INTO WarehouseProduct (warehouseId, productId, quantity) VALUES
 -- Product 1
 (1, 1, 50), (2, 1, 30), (3, 1, 20),
@@ -201,7 +226,3 @@ INSERT INTO WarehouseProduct (warehouseId, productId, quantity) VALUES
 (9, 18, 30), (10, 18, 30),
 -- Product 19
 (10, 19, 70), (1, 19, 70);
-
-
-
-

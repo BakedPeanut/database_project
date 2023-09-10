@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const customerId = 5;
+        const customerId = getUserID();
         const order = await Order.fetchById(customerId);
         const ordersArray = Array.isArray(order) ? result : [order];
         res.status(200).json(ordersArray);
@@ -32,6 +32,27 @@ router.put('/', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+router.post('/accept/:id', async (req, res) => {
+    try {
+        const customerId = getUserID();
+        const result = await Order.placeOrder(customerId);
+        res.status(201).json(result);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.post('/reject/:id', async (req, res) => {
+    try {
+        const customerId = getUserID();
+        const result = await Order.placeOrder(customerId);
+        res.status(201).json(result);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 
 module.exports = router;

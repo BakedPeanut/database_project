@@ -4,6 +4,7 @@ const Category = require('../models/category');
 const ProductAttribute = require('../models/productAttribute');
 
 const { getUserID } = require('../connector/mysql');
+const { ConnectionClosedEvent } = require('mongodb');
 
 // Create Category
 router.post('/', async (req, res) => {
@@ -12,6 +13,7 @@ router.post('/', async (req, res) => {
         const insertedCategories = await Category.insertMany(categoriesToAdd);
         res.status(201).json(insertedCategories);
     } catch (error) {
+        console.log(error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -90,7 +92,7 @@ router.get('/:id/childAttributes', async (req, res) => {
 
 
 // Update Category
-router.put('/:id', async (req, res) => {
+router.put('/', async (req, res) => {
     try {
         const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -99,6 +101,7 @@ router.put('/:id', async (req, res) => {
         if (!category) return res.status(404).send();
         res.status(200).send(category);
     } catch (error) {
+        console.log(error);
         res.status(400).send(error);
     }
 });

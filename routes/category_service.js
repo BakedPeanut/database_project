@@ -118,9 +118,9 @@ router.delete('/:id', async (req, res) => {
     try {
 
         const results = await getRowsByAttributeList(req.params.id);
-        // const category = await Category.findByIdAndDelete(req.params.id);
-        if (results.length > 0) {
-            res.status(200).send(results);
+        if (results.length == 0) {
+            const result = await Category.deleteOne({ _id: req.params.id });
+            res.status(200).send("delete successfully");
         } else {
             res.status(500).send("Products assocciate with this category");
 

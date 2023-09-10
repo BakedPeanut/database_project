@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
             category,
             sellerAccount
         } = req.body;
-
+        const sellerID = getUserID();
         // Call the addProductToWarehouse method to insert the product
         const result = await Product.addProductToWarehouse(
             width,
@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
             price,
             img,
             category,
-            sellerAccount
+            sellerID
         );
 
         res.status(201).json(result);
@@ -42,6 +42,7 @@ router.post('/', async (req, res) => {
 });
 
 
+// Get and filter products
 router.get('/:categoryID', async (req, res) => {
     let whereConditions = [];
     let queryParams = [];

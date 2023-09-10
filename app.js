@@ -145,13 +145,8 @@ app.post('/signout', (req, res) => {
       if (err) {
         console.error('Error destroying session:', err);
       } else {
-        const script = `
-        <script>
-          window.location.href = '/login'; // Redirect to the login page 
-        </script>
-      `;
-      
-        res.send(script);
+        res.redirect('/');
+        console.log(123);
       }
     });
 
@@ -183,7 +178,7 @@ app.get('/warehouse', (req, res) => {
     res.sendFile(path.join(__dirname, 'public_2', 'warehouse.html'));
   });
 app.get('/seller', (req, res) => {
-res.sendFile(path.join(__dirname, 'public_2', 'products.html'));
+res.sendFile(path.join(__dirname, 'public_2', 'products-seller.html'));
 });
 
 app.get('*', (req, res) => {

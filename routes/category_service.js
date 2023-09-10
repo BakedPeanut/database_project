@@ -148,6 +148,7 @@ router.post('/attribute/product', async (req, res) => {
     }
   });
   
+// Function to get all children of that category
 function getChildCategories(parentId, allCategories) {
     const children = allCategories.filter(category => category.parent === parentId);
     if (!children.length) {
@@ -190,22 +191,4 @@ async function getRowsByAttributeList(categoryId) {
     }
   }
 
-  
-    async function checkAndInsertAttributes() {
-        try {
-        // Check if the Attribute collection is empty
-        const count = await ProductAttribute.countDocuments();
-    
-        if (count === 0) {
-            // If there are no documents, insert the data
-            await ProductAttribute.insertMany(mockData);
-            console.log('Data inserted successfully.');
-        }
-        } catch (error) {
-        console.error('Error:', error);
-        }
-    }
-    
-    // Call the function to check and insert data
-    checkAndInsertAttributes();
 module.exports = router;

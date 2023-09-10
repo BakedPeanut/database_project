@@ -1,5 +1,4 @@
 	USE database_project;
-	drop procedure placeorder;
 	DELIMITER //
 
 	CREATE PROCEDURE PlaceOrder(

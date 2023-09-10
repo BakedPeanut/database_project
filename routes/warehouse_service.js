@@ -49,10 +49,11 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// Get relationtionship product and warehouse
 router.get('/inventory/:id', async (req, res) => {
     try {
         console.log(req.params.id);
-        const test = await Warehouse.getWarehouseProduct(); // Make sure this method exists in your Warehouse module
+        const test = await Warehouse.getWarehouseProduct(); 
         res.status(200).json(test);
     } catch (error) {
         res.status(500).json({ message: error.message });

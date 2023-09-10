@@ -99,7 +99,6 @@ router.get('/:categoryID', async (req, res) => {
         }
     }
 
-
     const sqlQuery = `
         SELECT p.* 
         FROM Product p
@@ -151,23 +150,26 @@ router.get('/', async (req, res) => {
     }
 });
 
-async function getAllCategoryIds(categoryId) {
-  const category = await Category.findById(categoryId).exec();
-
-  if (!category) {
-    throw new Error('Category not found');
-  }
-
-  const categoryIds = [category._id];
-
-  async function getChildrenIds(parentId) {
+// Get all children from a parent category
+async function getChildrenIds(parentId) {
 
     const children = await Category.find({ parent: parentId }).exec();
     for (const child of children) {
       categoryIds.push(child._id);
       await getChildrenIds(child._id);
     }
-  }
+}
+
+// Function to retrieve all category id and children
+async function getAllCategoryIds(categoryId) {
+  const category = await Category.findById(categoryId).exec();
+
+if (!category) {
+throw new Error('Category not found');
+}
+
+
+  const categoryIds = [category._id];
 
   await getChildrenIds(category._id);
   return categoryIds;

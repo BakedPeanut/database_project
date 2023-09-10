@@ -32,7 +32,7 @@ BEGIN
     warehouseAllocationLoop: LOOP
         FETCH warehouseCursor INTO currentWarehouseId, remainingVolume;
         
-        IF allocationComplete = 1 OR orderVolume <= 0 THEN
+        IF allocationComplete = 1 OR productVolume <= 0 THEN
             LEAVE warehouseAllocationLoop;
         END IF;
 
@@ -56,10 +56,10 @@ BEGIN
             SET allocationComplete = 1;
         ELSE
             -- Calculate how many units can be stored in the current warehouse
-            SET allocatedQuantity = FLOOR(orderVolume / (productWidth * productLength * productHeight));
+            SET allocatedQuantity = FLOOR(remainingVolume - orderVolume / (productWidth * productLength * productHeight));
 
             -- Update the remaining volume for the next iteration
-            SET remainingVolume = remainingVolume - (allocatedQuantity * productWidth * productLength * productHeight);
+            SET productVolume = productVolume - (allocatedQuantity * productWidth * productLength * productHeight);
 
             -- Update the WarehouseProduct table
             INSERT INTO WarehouseProduct(warehouseId, productId, quantity)
@@ -67,7 +67,7 @@ BEGIN
             ON DUPLICATE KEY UPDATE quantity = quantity + allocatedQuantity;
 
             -- Update warehouse's available volume to 0 since it's full now
-            UPDATE Warehouse SET volume = orderVolume - (allocatedQuantity * productWidth * productLength * productHeight) WHERE id = currentWarehouseId;
+            UPDATE Warehouse SET volume = remainingVolume - (allocatedQuantity * productWidth * productLength * productHeight) WHERE id = currentWarehouseId;
         END IF;
 
     END LOOP warehouseAllocationLoop;

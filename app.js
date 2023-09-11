@@ -1,33 +1,39 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const session = require('express-session');
-const connectMongoDB = require('./connector/mongoDB');
-const { updateConnectionDetails } = require('./connector/mysql');
+// Import necessary modules
+const express = require("express");
+const bodyParser = require("body-parser");
+const session = require("express-session");
+const connectMongoDB = require("./connector/mongoDB");
+const { updateConnectionDetails } = require("./connector/mysql");
 
 // Importing routes
-const warehouseRoutes = require('./routes/warehouse_service');
-const productRoutes = require('./routes/product_service');
-const cartRoutes = require('./routes/cart_service');
-const orderRoutes = require('./routes/order_service');
-const categoryRoutes = require('./routes/category_service');
-const path = require('path');
+const warehouseRoutes = require("./routes/warehouse_service");
+const productRoutes = require("./routes/product_service");
+const cartRoutes = require("./routes/cart_service");
+const orderRoutes = require("./routes/order_service");
+const categoryRoutes = require("./routes/category_service");
+const path = require("path");
 
 const app = express();
 
 // Create session
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(session({
-    secret: 'secret-key',
+app.use(
+  session({
+    secret: "secret-key",
     resave: false,
-    saveUninitialized: true
-}));
+    saveUninitialized: true,
+  })
+);
 
+// Connect to MongoDB
 connectMongoDB();
 
 // Login routes
-app.get('/login', (req, res) => {
-    res.send(`
+// Define a login route (GET request)
+app.get("/login", (req, res) => {
+  // Serve an HTML login form
+  res.send(`
     <!DOCTYPE html>
     <html>
     <head>
@@ -113,79 +119,84 @@ app.get('/login', (req, res) => {
     `);
 });
 
-// Handle login request
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+// Handle login request (POST request)
+app.post("/login", async (req, res) => {
+  // Extract username and password from request body
+  const { username, password } = req.body;
 
-    const userRole = await updateConnectionDetails(username, password); // Check user input
-    if (userRole != null) { // Valid input - redirect
-        req.session.user = { username };
-        if(userRole === "ADMIN") {
-            res.redirect('/warehouse');  
-        } else if (userRole === "SELLER") {
-            res.redirect('/seller');  
-        } else {
-            res.redirect('/');  
-        }
-
-    } else { // Invailid input
-        res.send(`
+  // Validate user credentials
+  const userRole = await updateConnectionDetails(username, password); // Check user input
+  if (userRole != null) {
+    // Valid input - set user session and redirect based on user role
+    req.session.user = { username };
+    if (userRole === "ADMIN") {
+      res.redirect("/warehouse");
+    } else if (userRole === "SELLER") {
+      res.redirect("/seller");
+    } else {
+      res.redirect("/");
+    }
+  } else {
+    // Invalid input - show an alert and redirect
+    res.send(`
             <script>
             alert("Invalid credentials!");
             window.location.href = '/your_desired_route_after_login';
             </script>
         `);
-    }
+  }
 });
 
-// Log out request
-app.get('/signout', (req, res) => {
-
-    req.session.destroy(err => {
-      if (err) {
-        console.error('Error destroying session:', err);
-      } else {
-        res.redirect('/');
-        console.log(123);
-      }
-    });
-
-
+// Logout route
+app.get("/signout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+    } else {
+      res.redirect("/");
+      console.log(123);
+    }
   });
+});
 
 // isAuthenticated Middleware
 app.use((req, res, next) => {
-    if (req.session && req.session.user) {
-        next();
-    } else {
-        res.redirect('/login');
-    }
+  if (req.session && req.session.user) {
+    next();
+  } else {
+    res.redirect("/login");
+  }
 });
 
-// Add static path
-app.use(express.static(path.join(__dirname, 'public', 'build')));
-app.use(express.static(path.join(__dirname, 'public_2')));
+// Serve static files (e.g., HTML, CSS, JavaScript) from the 'public' directory
+app.use(express.static(path.join(__dirname, "public", "build")));
+app.use(express.static(path.join(__dirname, "public_2")));
 
+// Define routes for various API services
+app.use("/api/warehouses", warehouseRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/carts", cartRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/categories", categoryRoutes);
 
-app.use('/api/warehouses', warehouseRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/carts', cartRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/categories', categoryRoutes);
-
-app.get('/warehouse', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public_2', 'warehouse.html'));
-  });
-app.get('/seller', (req, res) => {
-res.sendFile(path.join(__dirname, 'public_2', 'products-seller.html'));
+// Serve HTML files for specific routes
+app.get("/warehouse", (req, res) => {
+  res.sendFile(path.join(__dirname, "public_2", "warehouse.html"));
+});
+app.get("/seller", (req, res) => {
+  res.sendFile(path.join(__dirname, "public_2", "products-seller.html"));
 });
 
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'build', 'index.html'));
-  });
+// Catch-all route to serve the main HTML file for client-side routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "build", "index.html"));
+});
+
+// Start the server on the specified port
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });
 
+// Export the app for testing or reuse
 module.exports = app;

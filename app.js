@@ -153,7 +153,6 @@ app.get('/signout', (req, res) => {
 
   });
 
-
 // isAuthenticated Middleware
 app.use((req, res, next) => {
     if (req.session && req.session.user) {

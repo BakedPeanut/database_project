@@ -7,7 +7,7 @@ CREATE PROCEDURE UpdateProductQuantity(
 )
 BEGIN
     -- Define variables for the product's total volume, the remaining volume required to allocate, and an indicator if the allocation is completed.
-    DECLARE productVolume, remainingVolume, allocatedQuantity, orderVolume INT DEFAULT 0;
+    DECLARE productVolume, remainingVolume, allocatedQuantity, orderVolume, oldInStock INT DEFAULT 0;
 	DECLARE p_width, p_length, p_height INT;
 	DECLARE count INT default 0;
     DECLARE allocationComplete INT DEFAULT 0;
@@ -21,21 +21,24 @@ BEGIN
         FROM Warehouse 
         ORDER BY volume DESC;
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
--- 	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
--- 		BEGIN
--- 			-- Set the result to an error message
--- 			ROLLBACK;
--- 			RESIGNAL;
--- 		END;
--- 	SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+		BEGIN
+			-- Set the result to an error message
+			ROLLBACK;
+			RESIGNAL;
+		END;
+	SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 
--- 	start transaction;
-	SELECT width, length, height INTO p_width, p_length, p_height
+	start transaction;
+	SELECT width, length, height, inStock INTO p_width, p_length, p_height, oldInStock
     FROM Product
     WHERE id = p_productId;
- 
+	
+    if oldInStock < p_addQuantity then
+		Rollback;
+	end if;
     -- Calculate the product's total volume.
-    SET productVolume = p_width * p_length * p_height * p_addQuantity;
+    SET productVolume = p_width * p_length * p_height * (p_addQuantity - oldInStock);
 
     -- Open the cursor.
     OPEN warehouseCursor;
@@ -101,9 +104,9 @@ BEGIN
     -- Raise an exception if there's still some product left unallocated after checking all warehouses.
    IF productVolume > 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Not enough space in any warehouse for the entire stock.';
---         ROLLBACK;
--- 	ELSE
--- 		COMMIT;
+        ROLLBACK;
+	ELSE
+		COMMIT;
     END IF;
 
 END//

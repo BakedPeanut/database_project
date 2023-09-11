@@ -3,6 +3,7 @@ const Product = require('../models/product');
 const router = express.Router();
 const Category = require('../models/category');
 const { getUserID } = require('../connector/mysql');
+const ProductAttribute = require('../models/productAttribute')
 
 // Create product
 router.post('/', async (req, res) => {
@@ -17,9 +18,8 @@ router.post('/', async (req, res) => {
             description,
             price,
             img,
-            category,
-            sellerAccount
-        } = req.body;
+            category        } = req.body;
+        console.log(req.body);
         const sellerID = getUserID();
         // Call the addProductToWarehouse method to insert the product
         const result = await Product.addProductToWarehouse(
@@ -130,6 +130,29 @@ router.put('/update/:id', async (req, res) => {
     }
 });
 
+router.put('/update/attribute/:id', async (req, res) => {
+    try {
+        const options = {
+            upsert: true, // This will insert a new doc if one doesn't exist, and update if it does.
+            new: true, // This will return the updated doc (or the newly inserted one)
+        };
+        for (const item of req.body.requestData)    {
+            let filter = {
+                productID: req.params.id,
+                attributeID: item.attributeID
+            };
+
+            // Use await to ensure the update operation is complete
+            await ProductAttribute.findOneAndUpdate(filter, { value: item.value }, options);
+        }
+        
+        res.status(200).json({ message: 'Updated successfully' });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Delete product
 router.delete('/delete/:id', async (req, res) => {
     try {
@@ -146,6 +169,15 @@ router.get('/', async (req, res) => {
         const userID = getUserID();
         const products = await Product.selectAll(2);
         res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/abc/', async (req, res) => {
+    try {
+        const categories = await ProductAttribute.find({});
+        res.status(200).send(categories);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

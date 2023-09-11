@@ -62,6 +62,7 @@ router.get('/:id', async (req, res) => {
 });
 
 
+
 router.get('/:categoryId/attributes', async (req, res) => {
     const categoryId = req.params.categoryId;
     const attributes = [];
@@ -92,7 +93,7 @@ router.get('/:id/childAttributes', async (req, res) => {
 
 
 // Update Category
-router.put('/', async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -161,6 +162,7 @@ function getChildCategories(parentId, allCategories) {
         };
     });
 }
+//Get All Attribute (including children) from a category
 async function getAllAttributes(categoryId) {
     const categories = await Category.find({ parent: categoryId });
     const attributes = [];
@@ -174,6 +176,8 @@ async function getAllAttributes(categoryId) {
     return attributes;
 }
 
+
+// Get all ProductAttribute (including children) from a category
 async function getRowsByAttributeList(categoryId) {
     try {
       // Step 1: Get the list of _id values from getAllAttributes(req.params.id)

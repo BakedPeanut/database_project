@@ -1,8 +1,8 @@
-// connector/mysql.js
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 
 let userID = null;
+// Create a pool with root user first
 let pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
@@ -10,6 +10,7 @@ let pool = mysql.createPool({
     password: 'admin'
 });
 
+// Update the connection with other user after authentication
 async function updateConnectionDetails(username, password) {
     const [rows] = await pool.promise().execute('SELECT password, role, id FROM user WHERE username = ?', [username]);
 

@@ -16,12 +16,11 @@ const attributeSchema = new mongoose.Schema({
         required: true
     },
     _id: {
-        type: String, // You can change the type as needed
+        type: String, // 
         default: () => new mongoose.Types.ObjectId().toString(), // Auto-generate a custom ID if not provided
     }
 });
 
-// 
 const categorySchema = new mongoose.Schema({
     _id: {
         type: Number, // Use Number type for _id
@@ -156,6 +155,8 @@ const mockCategoryData =
 
 async function checkAndInsertCategories() {
     try {
+         await Category.deleteMany();
+
       // Check if the Category collection is empty
       const count = await Category.countDocuments();
   

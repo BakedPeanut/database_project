@@ -67,12 +67,16 @@ class Product {
     static update(id, updates) {
         return new Promise(async (resolve, reject) => {
             try {
-                const query = "UPDATE product SET ? WHERE id = ?";
-                const result = await db.pool.query(query, [updates, id]);
-                if (result.affectedRows === 0) {
-                    reject(new Error("Product not found"));
-                    return;
+                const selectQuery = "SELECT instock FROM product WHERE id = ?";
+                const [currentInstockRows] = await db.pool.query(selectQuery, [id]);
+                
+                const currentInstock = currentInstockRows[0].instock;
+
+                if (currentInstock < updates.inStock) {
+                    const query = "CALL UpdateProductQuantity(?,?)";
+                    const result = await db.pool.query(query, [id, updates.inStock]);
                 }
+
                 resolve();
             } catch (err) {
                 reject(err);

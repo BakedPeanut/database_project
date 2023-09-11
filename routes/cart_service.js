@@ -32,6 +32,7 @@ router.post('/', async (req, res) => {
     }
 });
 
+// Post request to clear all the items
 router.post('/clear', async (req, res) => {
     try {
         const customerId = getUserID();

@@ -139,7 +139,7 @@ app.post('/login', async (req, res) => {
 });
 
 // Log out request
-app.post('/signout', (req, res) => {
+app.get('/signout', (req, res) => {
 
     req.session.destroy(err => {
       if (err) {
